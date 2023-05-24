@@ -1,0 +1,20 @@
+{
+    "name": "Zenvin.ScriptGeneration.Editor",
+    "rootNamespace": "Zenvin.ScriptGeneration",
+    "references": [
+        "GUID:1564365213f20a14a9ba0c7d1ebc88cd",
+        "GUID:43e07366a3b322442ab7e131ca368d69",
+        "GUID:c252fd65bae31db4db8b79a863571ce7"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
