@@ -1,9 +1,9 @@
 {
-    "name": "com.zenvin.unity-script-generation",
-    "version": "1.0.0",
-    "displayName": "Script Generation Framework",
-    "description": "A framework to automate generating scripts in Unity (or generally execute functionality on domain reload).",
-    "unity": "2018.3",
+  "name": "com.zenvin.unity-script-generation",
+  "version": "1.0.0",
+  "displayName": "Script Generation Framework",
+  "description": "A framework to automate generating scripts in Unity (or generally execute functionality on domain reload).",
+  "unity": "2018.3",
   "author": {
     "name": "Zenvin",
     "email": "zenvin@outlook.de"
@@ -15,5 +15,12 @@
   "dependencies": {
     "com.zenvin.unity-editor-utility": "https://github.com/xZenvin/UnityEditorUtility",
     "com.zenvin.unity-project-preferences": "https://github.com/xZenvin/UnityProjectPreferences"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Tag Enum Factory",
+      "description": "An implementation of a script factory that generates a Tags enum based on the tags defined in the editor.",
+      "path": "Samples/TagGeneration"
+    }
+  ]
 }
