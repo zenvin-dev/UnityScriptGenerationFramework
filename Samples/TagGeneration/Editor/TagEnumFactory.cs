@@ -22,13 +22,19 @@ namespace Zenvin.ScriptGeneration.Tags {
 
 
 		private static readonly PrefKey ValueKey = new PrefKey ("$Zenvin.ScriptGeneration", "TAG_GENERATOR", PreviousValueKey);
-		private string outputPath;
+		private string outputPath = null;
 
-		[PropertyTooltip ("The path of the output file, relative to the Assets folder.")]
+		[PropertyTooltip ("The path of the output file, relative to the Assets folder."), StringPropertyDecorator("Assets/", null)]
 		public string OutputPath { get => outputPath; set => SetOutputPath (value); }
 
 
 		private void SetOutputPath (string value) {
+			// If the method is called during deserialization, just set the value without processing.
+			if (!IsDeserialized) {
+				outputPath = value;
+				return;
+			}
+
 			// if the values are already equal, cancel
 			if (outputPath == value) {
 				return;
@@ -38,83 +44,79 @@ namespace Zenvin.ScriptGeneration.Tags {
 			var oldPath = GetFullPath (OutputPath);
 			var newPath = GetFullPath (value);
 
-			// if new path is not valid, cancel
-			if (newPath == null || !newPath.EndsWith (".cs")) {
+			// get file info for paths
+			var oldFile = string.IsNullOrEmpty (oldPath) ? null : new FileInfo (oldPath);
+			var newFile = string.IsNullOrEmpty (newPath) ? null : new FileInfo (newPath);
+
+			// make sure new file path is valid
+			if (newFile == null || newFile.Extension != ".cs") {
+				LogError ("New output path is invalid (must be a .cs file name).");
 				return;
 			}
 
-			// make sure target directory exists
-			var newFile = new FileInfo (newPath);
-			if (!newFile.Directory.Exists) {
-				newFile.Directory.Create ();
-			}
-
-			if (!string.IsNullOrEmpty (oldPath)) {
-				// move existing file, if there is any
-				var oldFile = new FileInfo (oldPath);
-				if (oldFile.Exists) {
-					oldFile.MoveTo (newPath);
+			// move old file if necessary
+			if (oldFile != null && oldFile.Exists) {
+				if (newFile.Exists) {
+					LogError ($"A file already existed at '{newFile.FullName}'. Output path has not been updated.");
+					return;
 				}
+				oldFile.MoveTo (newFile.FullName);
 			}
 
 			// update output path
 			outputPath = value;
 		}
 
-
-		protected override void Setup () {
-			//GenerateAndEnableTags ();
-		}
-
-		protected override void OnApply () {
-			//GenerateAndEnableTags ();
-		}
-
-
 		private void GenerateTags () {
-			// load last saved tags
-			string json = ProjectPrefs.GetString (ValueKey, null);
-			string[] tags = InternalEditorUtility.tags;
-
-			// validate output path
-			bool validPath = ValidatePath (out FileInfo file);
-
-			// check if there were changes to the tags
-			string[] loadedTags;
-			try {
-				loadedTags = JsonUtility.FromJson<string[]> (json);
-			} catch {
-				ProjectPrefs.DeleteKey (ValueKey);
-				if (!validPath) {
-					DisableTags ();
-					return;
-				}
-				loadedTags = null;
-			}
-			if (json != null && Compare (loadedTags, tags)) {
-				Debug.Log ("Tags did not need to be regenerated.");
+			// if the factory has not been deserialized yet
+			if (!IsDeserialized) {
 				return;
 			}
 
+			// validate output path
+			bool validPath = ValidatePath (out string fullPath, out FileInfo file);
+			if (!validPath) {
+				LogError ($"Tags enum was not generated, because the output file path ('{fullPath}') was invalid.");
+				return;
+			}
+
+			// load tags
+			string json = ProjectPrefs.GetString (ValueKey, null);
+			string[] previousTags = (json == null ? JsonUtility.FromJson<TagCache> (json) : null)?.Tags;
+			string[] currentTags = InternalEditorUtility.tags;
+
+			// check if there were changes to the tags
+			if (json != null && Compare (previousTags, currentTags)) {
+				Debug.Log ("Tags enum did not need to be regenerated.");
+				return;
+			}
+
+			json = JsonUtility.ToJson (currentTags);
 			ProjectPrefs.SetValue (ValueKey, json);
+			ProjectPrefs.Save ();
 
 			// if tags were changed, regenerate
-			GenerateTags (file, tags);
+			GenerateTags (file, currentTags);
 		}
 
-		private bool ValidatePath (out FileInfo outputFile) {
-			var fullPath = GetFullPath (OutputPath);
-			outputFile = new FileInfo (fullPath);
+		private bool ValidatePath (out string fullPath, out FileInfo outputFile) {
+			fullPath = GetFullPath (OutputPath);
+			if (string.IsNullOrEmpty (fullPath)) {
+				outputFile = null;
+				return false;
+			}
 
-			if (outputFile.Extension == ".cs") {
-				DisableTags ();
+			outputFile = new FileInfo (fullPath);
+			if (outputFile.Extension == "cs") {
 				return false;
 			}
 
 			if (!outputFile.Directory.Exists) {
 				try {
 					outputFile.Directory.Create ();
-				} catch { }
+				} catch {
+					return false;
+				}
 			}
 			return true;
 		}
@@ -122,7 +124,6 @@ namespace Zenvin.ScriptGeneration.Tags {
 		internal void EnableTags () {
 #if !Zenvin_CUST_TAGS
 			if (!SymbolUtility.HasDebugSymbol (SYMBOL)) {
-				GenerateTags ();
 				SymbolUtility.AddDebugSymbol (SYMBOL);
 				EditorUtility.DisplayDialog ("Info", $"Tag Mask enabled.", "OK");
 			} else {
@@ -137,7 +138,7 @@ namespace Zenvin.ScriptGeneration.Tags {
 #endif
 		}
 
-		private bool GenerateTags (FileInfo outputFile, string[] tags) {
+		private void GenerateTags (FileInfo outputFile, string[] tags) {
 			// generating the content for the target file
 			string content = GetEnumFileContent (tags);
 
@@ -150,7 +151,7 @@ namespace Zenvin.ScriptGeneration.Tags {
 			// refreshing the AssetDatabase with a small delay to make sure the tag mask is up-to-date
 			EditorApplication.delayCall += () => { AssetDatabase.Refresh (ImportAssetOptions.ForceUpdate); };
 
-			return true;
+			EnableTags ();
 		}
 
 		private static string GetEnumFileContent (string[] tags) {
@@ -233,6 +234,9 @@ namespace Zenvin.ScriptGeneration.Tags {
 
 		// method for comparing two string arrays. used to make sure the mask file is not updated unless there are changed tags
 		private static bool Compare (string[] a, string[] b) {
+			if ((a == null && b != null) || (a != null && b == null)) {
+				return false;
+			}
 
 			// if the lengths of the arrays are unequal
 			if (a.Length != b.Length) {
@@ -259,8 +263,11 @@ namespace Zenvin.ScriptGeneration.Tags {
 		}
 
 
-		string[] IScriptFactoryExtension.GetFactoryButtonLabels () {
-			return new string[] { "Generate and Enable Tags", "Disable Tags" };
+		GUIContent[] IScriptFactoryExtension.GetFactoryButtonLabels () {
+			return new GUIContent[] {
+				new GUIContent("Generate and Enable Tags", "This may cause the project to recompile!"),
+				new GUIContent("Disable Tags", "This may cause the project to recompile!"),
+			};
 		}
 
 		bool IScriptFactoryExtension.IsFactoryButtonInteractable (int index) {
@@ -276,6 +283,7 @@ namespace Zenvin.ScriptGeneration.Tags {
 		void IScriptFactoryExtension.OnFactoryButtonClick (int index) {
 			switch (index) {
 				case 0:
+					GenerateTags ();
 					EnableTags ();
 					break;
 				case 1:
