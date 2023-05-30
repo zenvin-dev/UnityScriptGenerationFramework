@@ -62,6 +62,7 @@ namespace Zenvin.ScriptGeneration {
 					factories.Add (factory);
 					AnalyzeType (type);
 					DeserializeFactory (factory, type);
+					factory.IsDeserialized = true;
 					if (factory.Enabled) {
 						factory.Setup ();
 					}
@@ -89,7 +90,8 @@ namespace Zenvin.ScriptGeneration {
 				}
 
 				var tooltipAttr = prop.GetCustomAttribute<PropertyTooltipAttribute> ();
-				list.Insert (0, new FactoryProperty (prop, tooltipAttr?.Tooltip));
+				var decorAttr = prop.GetCustomAttribute<StringPropertyDecoratorAttribute> ();
+				list.Insert (0, new FactoryProperty (prop, tooltipAttr?.Tooltip, decorAttr));
 			}
 
 			serializedProperties[type] = list;
@@ -184,15 +186,17 @@ namespace Zenvin.ScriptGeneration {
 	internal class FactoryProperty {
 		public readonly PropertyInfo Property;
 		public readonly string Tooltip;
+		public readonly StringPropertyDecoratorAttribute Decorator;
 
 
 		public string Name => Property.Name;
 		public Type PropertyType => Property.PropertyType;
 
 
-		public FactoryProperty (PropertyInfo property, string tooltip = null) {
+		public FactoryProperty (PropertyInfo property, string tooltip = null, StringPropertyDecoratorAttribute decorator = null) {
 			Property = property;
 			Tooltip = tooltip;
+			Decorator = decorator;
 		}
 
 

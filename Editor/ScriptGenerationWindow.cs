@@ -14,7 +14,7 @@ namespace Zenvin.ScriptGeneration {
 		private int selected = -1;
 		private object[] currentValues;
 		private bool dirty;
-		private string[] buttons;
+		private GUIContent[] buttons;
 
 
 		[MenuItem ("Tools/Zenvin/Script Factories")]
@@ -37,9 +37,33 @@ namespace Zenvin.ScriptGeneration {
 			GUILayout.EndScrollView ();
 			GUILayout.EndArea ();
 
+			DrawFactory (editorRect);
+
+			EditorDrawUtility.DrawSeparator (editorRect, EditorDrawUtility.Side.Left, 1f, UnityColors.SeparatorColor, true);
+		}
+
+		private void DrawFactoryList () {
+			UpdateFactoryList ();
+			for (int i = 0; i < factoryList.Length; i++) {
+				if (EditorDrawUtility.Button (EditorGUILayout.GetControlRect (), new GUIContent (factoryList[i].Factory.GetType ().FullName), selected == i)) {
+					SelectFactory (i);
+				}
+			}
+		}
+
+		private void DrawFactory (Rect editorRect) {
 			if (selected >= 0 && selected < factoryList.Length) {
+				var factory = factoryList[selected].Factory;
+				var locked = Application.isPlaying && !factory.AllowPlaymodeChanges;
+
 				GUILayout.BeginArea (editorRect);
-				EditorGUILayout.LabelField (factoryList[selected].Factory.GetType ().Name, EditorStyles.boldLabel);
+				if (locked) {
+					EditorGUILayout.HelpBox ("This factory's settings are not available in play mode.", MessageType.Info);
+				}
+
+				EditorGUI.BeginDisabledGroup (locked);
+
+				EditorGUILayout.LabelField (factory.GetType ().Name, EditorStyles.boldLabel);
 				GUILayout.Space (10);
 
 				DrawFactoryButtons ();
@@ -59,20 +83,10 @@ namespace Zenvin.ScriptGeneration {
 					dirty = false;
 				}
 				EditorGUI.EndDisabledGroup ();
-
 				GUILayout.EndHorizontal ();
+
+				EditorGUI.EndDisabledGroup ();
 				GUILayout.EndArea ();
-			}
-
-			EditorDrawUtility.DrawSeparator (editorRect, EditorDrawUtility.Side.Left, 1f, UnityColors.SeparatorColor, true);
-		}
-
-		private void DrawFactoryList () {
-			UpdateFactoryList ();
-			for (int i = 0; i < factoryList.Length; i++) {
-				if (EditorDrawUtility.Button (EditorGUILayout.GetControlRect (), new GUIContent (factoryList[i].Factory.GetType ().FullName), selected == i)) {
-					SelectFactory (i);
-				}
 			}
 		}
 
@@ -118,35 +132,49 @@ namespace Zenvin.ScriptGeneration {
 				var prop = factoryInfo[i];
 				var type = prop.PropertyType;
 				var label = new GUIContent (prop.Name, prop.Tooltip);
+				var prefix = prop.Decorator?.Prefix;
+				var suffix = prop.Decorator?.Suffix;
+
+				GUILayout.BeginHorizontal ();
+				EditorGUILayout.PrefixLabel (label);
 
 				if (type == typeof (bool)) {
-					bool newValue = EditorGUILayout.Toggle (label, (bool)currentValues[i]);
+					bool newValue = EditorGUILayout.Toggle ((bool)currentValues[i]);
 					if (newValue != (bool)currentValues[i]) {
 						currentValues[i] = newValue;
 						dirty = true;
 					}
 				}
 				if (type == typeof (string)) {
-					string newValue = EditorGUILayout.DelayedTextField (label, (string)currentValues[i]);
+					if (!string.IsNullOrEmpty (prefix)) {
+						EditorGUILayout.LabelField (prefix, GUILayout.ExpandWidth (false));
+					}
+					string newValue = EditorGUILayout.DelayedTextField ((string)currentValues[i], GUILayout.ExpandWidth (true));
+					if (!string.IsNullOrEmpty (suffix)) {
+						EditorGUILayout.LabelField (suffix, GUILayout.ExpandWidth (false));
+					}
+
 					if (newValue != (string)currentValues[i]) {
 						currentValues[i] = newValue;
 						dirty = true;
 					}
 				}
 				if (type == typeof (int)) {
-					int newValue = EditorGUILayout.IntField (label, (int)currentValues[i]);
+					int newValue = EditorGUILayout.IntField ((int)currentValues[i]);
 					if (newValue != (int)currentValues[i]) {
 						currentValues[i] = newValue;
 						dirty = true;
 					}
 				}
 				if (type == typeof (float)) {
-					float newValue = EditorGUILayout.FloatField (label, (float)currentValues[i]);
+					float newValue = EditorGUILayout.FloatField ((float)currentValues[i]);
 					if (newValue != (float)currentValues[i]) {
 						currentValues[i] = newValue;
 						dirty = true;
 					}
 				}
+
+				GUILayout.EndHorizontal ();
 			}
 		}
 
