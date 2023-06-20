@@ -9,63 +9,17 @@ using Zenvin.EditorUtil;
 using Zenvin.ProjectPreferences;
 
 namespace Zenvin.ScriptGeneration.Tags {
-	public class TagEnumFactory : ScriptFactory, IScriptFactoryExtension {
+	public class TagEnumFactory : DirectedScriptFactory, IScriptFactoryExtension {
 
 		/// <summary> The editor prefs key, under which the previous enum values are saved, so there is no inifinite loop when regenerating the file. </summary>
 		private const string PreviousValueKey = "EDITOR_TAGS";
-		/// <summary> The editor prefs key, under which the path for the script file is saved. Relative to the Assets folder. </summary>
-		internal const string ScriptFileLocationKey = "Zenvin_TAG_GEN_Script_Location";
 		/// <summary> The editor prefs key, under which the name for the script file is saved. </summary>
 		internal const string ScriptFileNameKey = "Zenvin_TAG_GEN_Script_Name";
 
 		private const string SYMBOL = "Zenvin_CUST_TAGS";
 
-
 		private static readonly PrefKey ValueKey = new PrefKey ("$Zenvin.ScriptGeneration", "TAG_GENERATOR", PreviousValueKey);
-		private string outputPath = null;
 
-		[PropertyTooltip ("The path of the output file, relative to the Assets folder."), StringPropertyDecorator("Assets/", null)]
-		public string OutputPath { get => outputPath; set => SetOutputPath (value); }
-
-
-		private void SetOutputPath (string value) {
-			// If the method is called during deserialization, just set the value without processing.
-			if (!IsDeserialized) {
-				outputPath = value;
-				return;
-			}
-
-			// if the values are already equal, cancel
-			if (outputPath == value) {
-				return;
-			}
-
-			// get fully qualified paths
-			var oldPath = GetFullPath (OutputPath);
-			var newPath = GetFullPath (value);
-
-			// get file info for paths
-			var oldFile = string.IsNullOrEmpty (oldPath) ? null : new FileInfo (oldPath);
-			var newFile = string.IsNullOrEmpty (newPath) ? null : new FileInfo (newPath);
-
-			// make sure new file path is valid
-			if (newFile == null || newFile.Extension != ".cs") {
-				LogError ("New output path is invalid (must be a .cs file name).");
-				return;
-			}
-
-			// move old file if necessary
-			if (oldFile != null && oldFile.Exists) {
-				if (newFile.Exists) {
-					LogError ($"A file already existed at '{newFile.FullName}'. Output path has not been updated.");
-					return;
-				}
-				oldFile.MoveTo (newFile.FullName);
-			}
-
-			// update output path
-			outputPath = value;
-		}
 
 		private void GenerateTags () {
 			// if the factory has not been deserialized yet
@@ -74,7 +28,7 @@ namespace Zenvin.ScriptGeneration.Tags {
 			}
 
 			// validate output path
-			bool validPath = ValidatePath (out string fullPath, out FileInfo file);
+			bool validPath = ValidateOrCreateOutputPath (out string fullPath, out FileInfo file);
 			if (!validPath) {
 				LogError ($"Tags enum was not generated, because the output file path ('{fullPath}') was invalid.");
 				return;
@@ -97,28 +51,6 @@ namespace Zenvin.ScriptGeneration.Tags {
 
 			// if tags were changed, regenerate
 			GenerateTags (file, currentTags);
-		}
-
-		private bool ValidatePath (out string fullPath, out FileInfo outputFile) {
-			fullPath = GetFullPath (OutputPath);
-			if (string.IsNullOrEmpty (fullPath)) {
-				outputFile = null;
-				return false;
-			}
-
-			outputFile = new FileInfo (fullPath);
-			if (outputFile.Extension == "cs") {
-				return false;
-			}
-
-			if (!outputFile.Directory.Exists) {
-				try {
-					outputFile.Directory.Create ();
-				} catch {
-					return false;
-				}
-			}
-			return true;
 		}
 
 		internal void EnableTags () {
@@ -253,13 +185,6 @@ namespace Zenvin.ScriptGeneration.Tags {
 			}
 
 			return true;
-		}
-
-		private string GetFullPath (string name) {
-			if (string.IsNullOrWhiteSpace (name)) {
-				return null;
-			}
-			return Path.Combine (Application.dataPath, name);
 		}
 
 
