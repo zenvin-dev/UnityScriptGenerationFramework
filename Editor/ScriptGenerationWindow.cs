@@ -218,7 +218,7 @@ namespace Zenvin.ScriptGeneration {
 				if (PrefValue.TryCreate (currentValues[i], out PrefValue value)) {
 					ProjectPrefs.SetValue (ScriptGenerator.GetPropertyPrefKey (targ.GetType (), fact[i].Property), value, ProjectPrefs.ValueOverrideOption.AlwaysOverride);
 				} else {
-					Debug.LogError ($"Could not set preference of type {fact[i].PropertyType}.");
+					Debug.LogError ($"Could not set preference of type {fact[i].PropertyType} (Source: {targ.GetType().FullName}.{fact[i].Property}).");
 				}
 			}
 
