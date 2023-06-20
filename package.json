@@ -1,6 +1,6 @@
 {
   "name": "com.zenvin.unity-script-generation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Script Generation Framework",
   "description": "A framework to automate generating scripts in Unity (or generally execute functionality on domain reload).",
   "unity": "2018.3",
@@ -21,6 +21,11 @@
       "displayName": "Tag Enum Factory",
       "description": "An implementation of a script factory that generates a Tags enum based on the tags defined in the editor.",
       "path": "Samples/TagGeneration"
+    },
+    {
+      "displayName": "'Create Asset' Menu Item Factory",
+      "description": "An implementation of a script factory that generates 'MenuItem' entries for every ScriptableObject directly or indirectly decorated with the 'CreateAssetInstanceMenu' attribute.",
+      "path": "Samples/CreateItemMenuGeneration"
     }
   ]
 }
