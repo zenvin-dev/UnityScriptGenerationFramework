@@ -13,8 +13,8 @@
     "url": "https://github.com/xZenvin/UnityScriptGenerationFramework"
   },
   "dependencies": {
-    "com.zenvin.unity-editor-utility": "https://github.com/xZenvin/UnityEditorUtility",
-    "com.zenvin.unity-project-preferences": "https://github.com/xZenvin/UnityProjectPreferences"
+    "com.zenvin.unity-editor-utility": "https://github.com/xZenvin/UnityEditorUtility.git",
+    "com.zenvin.unity-project-preferences": "https://github.com/xZenvin/UnityProjectPreferences.git"
   },
   "samples": [
     {
