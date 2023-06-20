@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "com.zenvin.unity-editor-utility": "git+https://github.com/xZenvin/UnityEditorUtility.git",
-    "com.zenvin.unity-project-preferences": "git+https://github.com/xZenvin/UnityProjectPreferences.git#1.0.0"
+    "com.zenvin.unity-project-preferences": "git+https://github.com/xZenvin/UnityProjectPreferences.git"
   },
   "samples": [
     {
