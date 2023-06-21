@@ -1,6 +1,0 @@
-[submodule "prefs"]
-	path = prefs
-	url = https://github.com/xZenvin/UnityProjectPreferences
-[submodule "editorutil"]
-	path = editorutil
-	url = https://github.com/xZenvin/UnityEditorUtility
