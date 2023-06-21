@@ -12,10 +12,6 @@
     "type": "git",
     "url": "https://github.com/xZenvin/UnityScriptGenerationFramework"
   },
-  "dependencies": {
-    "com.zenvin.unity-editor-utility": "git+https://github.com/xZenvin/UnityEditorUtility.git#main",
-    "com.zenvin.unity-project-preferences": "git+https://github.com/xZenvin/UnityProjectPreferences.git#main"
-  },
   "samples": [
     {
       "displayName": "Tag Enum Factory",
