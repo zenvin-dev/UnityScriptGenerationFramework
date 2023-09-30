@@ -20,12 +20,12 @@
     {
       "displayName": "Tag Enum Factory",
       "description": "An implementation of a script factory that generates a Tags enum based on the tags defined in the editor.",
-      "path": "Samples/TagGeneration"
+      "path": "Samples~/TagGeneration"
     },
     {
       "displayName": "'Create Asset' Menu Item Factory",
       "description": "An implementation of a script factory that generates 'MenuItem' entries for every ScriptableObject directly or indirectly decorated with the 'CreateAssetInstanceMenu' attribute.",
-      "path": "Samples/CreateItemMenuGeneration"
+      "path": "Samples~/CreateItemMenuGeneration"
     }
   ]
 }
